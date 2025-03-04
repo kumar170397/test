@@ -1,19 +1,64 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- main
+- main  # Adjust branch trigger as needed
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+- task: PowerShell@2
+  displayName: 'Create Work Item in Azure DevOps'
+  inputs:
+    targetType: 'inline'
+    script: |
+      $organization = "your-org-name"
+      $project = "your-project-name"
+      $pat = "$(System.AccessToken)"  # Ensure the pipeline has permissions
+      $workItemType = "Task"
+      $workItemTitle = "Automated Work Item from Pipeline"
+      $workItemDescription = "This work item was created via Azure DevOps pipeline"
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+      $url = "https://dev.azure.com/$organization/$project/_apis/wit/workitems/\`$`$workItemType?api-version=6.0"
+      $headers = @{
+          Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$pat"))
+          "Content-Type" = "application/json-patch+json"
+      }
+      $body = @"
+      [
+          { "op": "add", "path": "/fields/System.Title", "value": "$workItemTitle" },
+          { "op": "add", "path": "/fields/System.Description", "value": "$workItemDescription" }
+      ]
+      "@
+
+      Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $body | ConvertTo-Json -Depth 10
+
+- task: PowerShell@2
+  displayName: 'Create Jira Issue from Azure DevOps'
+  inputs:
+    targetType: 'inline'
+    script: |
+      $jiraBaseUrl = "https://your-jira-instance.atlassian.net"
+      $jiraUser = "your-email@example.com"
+      $jiraApiToken = "your-jira-api-token"
+      $projectKey = "JIRA-PROJECT-KEY"
+      $issueType = "Task"
+      $summary = "Automated Jira Issue from Azure DevOps Pipeline"
+      $description = "This Jira issue was created as a result of an Azure DevOps Work Item."
+
+      $url = "$jiraBaseUrl/rest/api/2/issue"
+      $headers = @{
+          Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$jiraUser`:$jiraApiToken"))
+          "Content-Type" = "application/json"
+      }
+      $body = @"
+      {
+          "fields": {
+              "project": { "key": "$projectKey" },
+              "summary": "$summary",
+              "description": "$description",
+              "issuetype": { "name": "$issueType" }
+          }
+      }
+      "@
+
+      Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $body | ConvertTo-Json -Depth 10
+
