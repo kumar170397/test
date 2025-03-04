@@ -1,64 +1,46 @@
-trigger:
-- main  # Adjust branch trigger as needed
+jobs:
+- job: Create_Jira_Issue
+  displayName: 'Create Jira Issue from Work Item'
+  pool:
+    vmImage: 'ubuntu-latest'
+  
+  steps:
+  - script: |
+      #!/bin/bash
+      echo "Starting Jira issue creation..."
 
-pool:
-  vmImage: 'ubuntu-latest'
+      # Jira Credentials (Using Secure Variables)
+      JIRA_BASE_URL="https://your-domain.atlassian.net"
+      JIRA_PROJECT_KEY="YOUR_PROJECT_KEY"
+      JIRA_USER_EMAIL="$(JIRA_USER_EMAIL)"
+      JIRA_API_TOKEN="$(JIRA_API_TOKEN)"
 
-steps:
-- task: PowerShell@2
-  displayName: 'Create Work Item in Azure DevOps'
-  inputs:
-    targetType: 'inline'
-    script: |
-      $organization = "your-org-name"
-      $project = "your-project-name"
-      $pat = "$(System.AccessToken)"  # Ensure the pipeline has permissions
-      $workItemType = "Task"
-      $workItemTitle = "Automated Work Item from Pipeline"
-      $workItemDescription = "This work item was created via Azure DevOps pipeline"
+      # Work Item Data (Replace this with actual work item details)
+      WORK_ITEM_TITLE="New Work Item from Azure DevOps"
+      WORK_ITEM_DESCRIPTION="Automatically created from Azure DevOps pipeline"
+      WORK_ITEM_TYPE="Task"
 
-      $url = "https://dev.azure.com/$organization/$project/_apis/wit/workitems/\`$`$workItemType?api-version=6.0"
-      $headers = @{
-          Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$pat"))
-          "Content-Type" = "application/json-patch+json"
-      }
-      $body = @"
-      [
-          { "op": "add", "path": "/fields/System.Title", "value": "$workItemTitle" },
-          { "op": "add", "path": "/fields/System.Description", "value": "$workItemDescription" }
-      ]
-      "@
-
-      Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $body | ConvertTo-Json -Depth 10
-
-- task: PowerShell@2
-  displayName: 'Create Jira Issue from Azure DevOps'
-  inputs:
-    targetType: 'inline'
-    script: |
-      $jiraBaseUrl = "https://your-jira-instance.atlassian.net"
-      $jiraUser = "your-email@example.com"
-      $jiraApiToken = "your-jira-api-token"
-      $projectKey = "JIRA-PROJECT-KEY"
-      $issueType = "Task"
-      $summary = "Automated Jira Issue from Azure DevOps Pipeline"
-      $description = "This Jira issue was created as a result of an Azure DevOps Work Item."
-
-      $url = "$jiraBaseUrl/rest/api/2/issue"
-      $headers = @{
-          Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$jiraUser`:$jiraApiToken"))
-          "Content-Type" = "application/json"
-      }
-      $body = @"
+      # Create JSON Payload
+      JIRA_PAYLOAD=$(cat <<EOF
       {
-          "fields": {
-              "project": { "key": "$projectKey" },
-              "summary": "$summary",
-              "description": "$description",
-              "issuetype": { "name": "$issueType" }
-          }
+        "fields": {
+          "project": { "key": "$JIRA_PROJECT_KEY" },
+          "summary": "$WORK_ITEM_TITLE",
+          "description": "$WORK_ITEM_DESCRIPTION",
+          "issuetype": { "name": "$WORK_ITEM_TYPE" }
+        }
       }
-      "@
+      EOF
+      )
 
-      Invoke-RestMethod -Uri $url -Method POST -Headers $headers -Body $body | ConvertTo-Json -Depth 10
+      # Send API Request to Jira
+      RESPONSE=$(curl --request POST \
+        --url "$JIRA_BASE_URL/rest/api/3/issue" \
+        --user "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
+        --header "Accept: application/json" \
+        --header "Content-Type: application/json" \
+        --data "$JIRA_PAYLOAD")
+
+      echo "JIRA RESPONSE: $RESPONSE"
+    displayName: 'Run Bash Script to Create Jira Issue'
 
