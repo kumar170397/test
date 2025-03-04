@@ -1,1 +1,15 @@
-hiii
+trigger:
+  - main
+
+jobs:
+- job: Create_Jira_Issue
+  displayName: 'Create Jira Issue from Work Item'
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - script: |
+      #!/bin/bash
+      echo "Creating Jira issue..."
+      bash ./create_jira_issue.sh
+    displayName: 'Run Bash Script'
+
