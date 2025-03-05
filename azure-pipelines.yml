@@ -10,10 +10,10 @@ jobs:
       echo "Starting Jira issue creation..."
 
       # Jira Credentials (Using Secure Variables)
-      JIRA_BASE_URL="https://your-domain.atlassian.net"
-      JIRA_PROJECT_KEY="YOUR_PROJECT_KEY"
-      JIRA_USER_EMAIL="$(JIRA_USER_EMAIL)"
-      JIRA_API_TOKEN="$(JIRA_API_TOKEN)"
+      JIRA_BASE_URL="https://kumarchandusn56.atlassian.net"
+      JIRA_PROJECT_KEY="PRJCT3"
+      JIRA_USER_EMAIL="$kumarchandusn56@gmail.com"
+      JIRA_API_TOKEN="$ATATT3xFfGF0N3iIAoSCu4by2xRhDopqkT4H0LdQna9IFytpC7Bw_nqmZWNoTdj9ZA_lxiqtr6ob429RqUiWVsY9plkrU8gfIIuhW22dsFAERltcooj5SXY3sPOrgJNTq4oIbsEO1LojN0ZfaXom-FtrKNmo56uDrkPbsCIquWIHocAt5Hti4NY=FBFDD670"
 
       # Work Item Data (Replace this with actual work item details)
       WORK_ITEM_TITLE="New Work Item from Azure DevOps"
@@ -24,7 +24,7 @@ jobs:
       JIRA_PAYLOAD=$(cat <<EOF
       {
         "fields": {
-          "project": { "key": "$JIRA_PROJECT_KEY" },
+          "project": { "key": "$PRJCT3" },
           "summary": "$WORK_ITEM_TITLE",
           "description": "$WORK_ITEM_DESCRIPTION",
           "issuetype": { "name": "$WORK_ITEM_TYPE" }
@@ -35,12 +35,11 @@ jobs:
 
       # Send API Request to Jira
       RESPONSE=$(curl --request POST \
-        --url "$JIRA_BASE_URL/rest/api/3/issue" \
-        --user "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
+        --url "$https://kumarchandusn56.atlassian.net/rest/api/3/issue" \
+        --user "$kumarchandusn56@gmail.com:$ATATT3xFfGF0N3iIAoSCu4by2xRhDopqkT4H0LdQna9IFytpC7Bw_nqmZWNoTdj9ZA_lxiqtr6ob429RqUiWVsY9plkrU8gfIIuhW22dsFAERltcooj5SXY3sPOrgJNTq4oIbsEO1LojN0ZfaXom-FtrKNmo56uDrkPbsCIquWIHocAt5Hti4NY=FBFDD670" \
         --header "Accept: application/json" \
         --header "Content-Type: application/json" \
         --data "$JIRA_PAYLOAD")
 
       echo "JIRA RESPONSE: $RESPONSE"
     displayName: 'Run Bash Script to Create Jira Issue'
-
