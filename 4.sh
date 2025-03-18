@@ -7,5 +7,5 @@ do
 	f=`expr $n \* $f`
 	n=`expr $n - 1`
 done
-echo " Fcatorial of $1 is $f"
+echo " Facttorial of $1 is $f"
 
